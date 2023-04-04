@@ -1,4 +1,56 @@
-export function statement(invoice, plays) {
+//switch 에 있는 로직 함수로 빼주기
+export function statementRemoveSwitch(invoice, plays) {
+
+  const calculateTragedyAmount = (_perf) => {
+    let amount = 40000;
+
+    if (_perf.audience > 30) {
+      amount += 1_000 * (_perf.audience - 30);
+    }
+
+    return amount;
+  }
+
+  const calculateComedyAmount = (_perf) => {
+    let amount = 30000;
+
+    if (_perf.audience > 20) {
+      amount += 10_000 + 500 * (_perf.audience - 20);
+    }
+    amount += 300 * _perf.audience;
+
+    return amount;
+  }
+
+  const calculateAmount = (_perf) => {
+    const play = plays[_perf.playID];
+    let amount = 0;
+
+    switch (play.type) {
+      case 'tragedy':
+        amount = calculateTragedyAmount(_perf);
+        break;
+      case 'comedy':
+        amount = calculateComedyAmount(_perf);
+        break;
+      default:
+        throw new Error(`알 수 없는 장르: ${play.type}`);
+    }
+    return amount;
+
+  }
+
+  const calculateVolumeCredits = (_perf) => {
+    let credits = Math.max(_perf.audience - 30, 0);
+
+    if (plays[_perf.playID].type === 'comedy') {
+      credits += Math.floor(_perf.audience / 5);
+    }
+
+    return credits;
+  };
+
+
   let totalAmount = 0;
   let volumeCredits = 0;
   let result = `청구내역 (고객명: ${invoice.customer})\n`;
@@ -6,61 +58,251 @@ export function statement(invoice, plays) {
       .format;
 
   for (let perf of invoice.performances) {
-    const play = plays[perf.playID];
-    let thisAmount = 0;
+    const amount = calculateAmount(perf);
+    const credits = calculateVolumeCredits(perf);
 
-    switch (play.type) {
-      case 'tragedy':
-        thisAmount = 40_000;
-        if (perf.audience > 30) {
-          thisAmount += 1_000 * (perf.audience - 30);
-        }
-        break;
-      case 'comedy':
-        thisAmount = 30_000;
+    // 청구 내역을 출력한다.
+    result += `${plays[perf.playID].name}: ${format(amount / 100)} ${perf.audience}석\n`;
 
-        if (perf.audience > 20) {
-          thisAmount += 10_000 + 500 * (perf.audience - 20);
-        }
-        thisAmount += 300 * perf.audience;
-        break;
-
-      default:
-        throw new Error(`알 수 없는 장르: ${play.type}`);
-    }
-
-    volumeCredits = addPoint(perf.audience);
-
-    volumeCredits = addAditionalPoint(play.type, perf.audience);
-
-    printReceipt(play.name, thisAmount, perf.audience, format);
-
-    totalAmount += thisAmount;
+    totalAmount += amount;
+    volumeCredits += credits;
   }
-
   result += `총액 ${format(totalAmount / 100)}\n`;
   result += `적립 포인트 ${volumeCredits}점\n`;
 
   return result;
 }
 
-function addPoint(_perf) {
-  // 포인트를 적립한다.
-  return Math.max(_perf - 30, 0);
-}
+//임의 변수 질의함수로 바꾸기(play 제거)
+export function statementRemovePlay(invoice, plays) {
 
-function addAditionalPoint(_play, _perf) {
-  // 희극 관객 5명마다 추가 포인트를 제공한다.
-  if ('comedy' !== _play) {
-    return;
+  const playFor = (_perf) => {
+    return plays[_perf.playID];
   }
-  return Math.floor( _perf / 5);
+
+  const calculateTragedyAmount = (_perf) => {
+    let amount = 40000;
+
+    if (_perf.audience > 30) {
+      amount += 1_000 * (_perf.audience - 30);
+    }
+
+    return amount;
+  }
+
+  const calculateComedyAmount = (_perf) => {
+    let amount = 30000;
+
+    if (_perf.audience > 20) {
+      amount += 10_000 + 500 * (_perf.audience - 20);
+
+    }
+    amount += 300 * _perf.audience;
+    return amount;
+  }
+
+  const calculateAmount = (_perf) => {
+    const play = playFor(_perf);
+    let amount = 0;
+
+    switch (play.type) {
+      case 'tragedy':
+        amount = calculateTragedyAmount(_perf);
+        break;
+      case 'comedy':
+        amount = calculateComedyAmount(_perf);
+        break;
+      default:
+        throw new Error(`알 수 없는 장르: ${play.type}`);
+    }
+    return amount;
+
+  }
+
+  const calculateVolumeCredits = (_perf) => {
+    let credits = Math.max(_perf.audience - 30, 0);
+    if (playFor(_perf).type === 'comedy') {
+      credits += Math.floor(_perf.audience / 5);
+    }
+    return credits;
+  };
+
+
+  let totalAmount = 0;
+  let volumeCredits = 0;
+  let result = `청구내역 (고객명: ${invoice.customer})\n`;
+  const format = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+      .format;
+
+  for (let perf of invoice.performances) {
+    const amount = calculateAmount(perf);
+    const credits = calculateVolumeCredits(perf);
+
+    // 청구 내역을 출력한다.
+    result += `${playFor(perf).name}: ${format(amount / 100)} ${perf.audience}석\n`;
+
+    totalAmount += amount;
+    volumeCredits += credits;
+  }
+  result += `총액 ${format(totalAmount / 100)}\n`;
+  result += `적립 포인트 ${volumeCredits}점\n`;
+
+  return result;
 }
 
-function printReceipt(_play, thisAmount, _pref, format) {
-  // 청구 내역을 출력한다.
-  let result = 0;
-  result += `${_play}: ${format(thisAmount / 100)} ${_pref}석\n`;
+//변수 인라인 하기
+export function statementRemoveVar(invoice, plays) {
+
+  const playFor = (_perf) => {
+    return plays[_perf.playID];
+  }
+
+  const calculateTragedyAmount = (_perf) => {
+    let amount = 40000;
+
+    if (_perf.audience > 30) {
+      amount += 1_000 * (_perf.audience - 30);
+    }
+
+    return amount;
+  }
+
+  const calculateComedyAmount = (_perf) => {
+    let amount = 30000;
+
+    if (_perf.audience > 20) {
+      amount += 10_000 + 500 * (_perf.audience - 20);
+
+    }
+    amount += 300 * _perf.audience;
+
+    return amount;
+  }
+
+  const calculateAmount = (_perf) => {
+    let amount = 0;
+
+    switch ( playFor(_perf).type) {
+      case 'tragedy':
+        amount = calculateTragedyAmount(_perf);
+        break;
+      case 'comedy':
+        amount = calculateComedyAmount(_perf);
+        break;
+      default:
+        throw new Error(`알 수 없는 장르: ${ playFor(_perf).type}`);
+    }
+    return amount;
+
+  }
+
+  const calculateVolumeCredits = (_perf) => {
+    let credits = Math.max(_perf.audience - 30, 0);
+    if (playFor(_perf).type === 'comedy') {
+      credits += Math.floor(_perf.audience / 5);
+    }
+    return credits;
+  };
+
+
+  let totalAmount = 0;
+  let volumeCredits = 0;
+  let result = `청구내역 (고객명: ${invoice.customer})\n`;
+  const format = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+      .format;
+
+  for (let perf of invoice.performances) {
+    const amount = calculateAmount(perf);
+    const credits = calculateVolumeCredits(perf);
+
+    // 청구 내역을 출력한다.
+    result += `${playFor(perf).name}: ${format(amount / 100)} ${perf.audience}석\n`;
+
+    totalAmount += amount;
+    volumeCredits += credits;
+  }
+  result += `총액 ${format(totalAmount / 100)}\n`;
+  result += `적립 포인트 ${volumeCredits}점\n`;
+
+  return result;
+}
+
+
+//포맷 함수 만들기
+export function statementCreateFormat(invoice, plays) {
+  const format = (_num) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+        .format(_num);
+  }
+
+  const playFor = (_perf) => {
+    return plays[_perf.playID];
+  }
+
+  const calculateTragedyAmount = (_perf) => {
+    let amount = 40000;
+
+    if (_perf.audience > 30) {
+      amount += 1_000 * (_perf.audience - 30);
+    }
+
+    return amount;
+  }
+
+  const calculateComedyAmount = (_perf) => {
+    let amount = 30000;
+
+    if (_perf.audience > 20) {
+      amount += 10_000 + 500 * (_perf.audience - 20);
+
+    }
+    amount += 300 * _perf.audience;
+
+    return amount;
+  }
+
+  const calculateAmount = (_perf) => {
+    let amount = 0;
+
+    switch ( playFor(_perf).type) {
+      case 'tragedy':
+        amount = calculateTragedyAmount(_perf);
+        break;
+      case 'comedy':
+        amount = calculateComedyAmount(_perf);
+        break;
+      default:
+        throw new Error(`알 수 없는 장르: ${ playFor(_perf).type}`);
+    }
+    return amount;
+
+  }
+
+  const calculateVolumeCredits = (_perf) => {
+    let credits = Math.max(_perf.audience - 30, 0);
+    if (playFor(_perf).type === 'comedy') {
+      credits += Math.floor(_perf.audience / 5);
+    }
+    return credits;
+  };
+
+
+  let totalAmount = 0;
+  let volumeCredits = 0;
+  let result = `청구내역 (고객명: ${invoice.customer})\n`;
+
+  for (let perf of invoice.performances) {
+    const amount = calculateAmount(perf);
+    const credits = calculateVolumeCredits(perf);
+
+    // 청구 내역을 출력한다.
+    result += `${playFor(perf).name}: ${format(amount / 100)} ${perf.audience}석\n`;
+
+    totalAmount += amount;
+    volumeCredits += credits;
+  }
+  result += `총액 ${format(totalAmount / 100)}\n`;
+  result += `적립 포인트 ${volumeCredits}점\n`;
 
   return result;
 }
