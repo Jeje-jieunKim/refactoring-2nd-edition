@@ -1,4 +1,4 @@
-import { statementCreateFormat } from './01-1/statement.js';
+import { statementCreateFormat } from './01-1/class.js';
 
 import invoices from './invoices.json' assert { type: "json" };
 import plays from './plays.json' assert { type: "json" };

@@ -1,4 +1,6 @@
 //switch 에 있는 로직 함수로 빼주기
+import {re} from "@babel/core/lib/vendor/import-meta-resolve.js";
+
 export function statementRemoveSwitch(invoice, plays) {
 
   const calculateTragedyAmount = (_perf) => {
